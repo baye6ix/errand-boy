@@ -1,0 +1,68 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ErrandBoyHostingAndCDN",
+      "Effect": "Allow",
+      "Action": [
+        "s3:*",
+        "cloudfront:*",
+        "route53:*",
+        "acm:*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "ErrandBoyComputeAndApi",
+      "Effect": "Allow",
+      "Action": [
+        "lambda:*",
+        "apigateway:*",
+        "logs:*",
+        "cloudwatch:*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "ErrandBoyDataAndAuth",
+      "Effect": "Allow",
+      "Action": [
+        "dynamodb:*",
+        "cognito-idp:*",
+        "cognito-identity:*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "ErrandBoySecretsAndAi",
+      "Effect": "Allow",
+      "Action": [
+        "secretsmanager:*",
+        "bedrock:InvokeModel",
+        "bedrock:InvokeModelWithResponseStream"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "ErrandBoyDeploymentIaC",
+      "Effect": "Allow",
+      "Action": [
+        "cloudformation:*",
+        "iam:GetRole",
+        "iam:PassRole",
+        "iam:CreateRole",
+        "iam:AttachRolePolicy",
+        "iam:PutRolePolicy",
+        "iam:DeleteRole",
+        "iam:DetachRolePolicy",
+        "iam:DeleteRolePolicy",
+        "iam:CreatePolicy",
+        "iam:TagRole",
+        "ssm:GetParameter",
+        "ssm:GetParameters",
+        "ssm:PutParameter"
+      ],
+      "Resource": "*"
+    }
+  ]
+}

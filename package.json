@@ -1,0 +1,13 @@
+{
+  "name": "errand-boy",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Premium Lagos concierge & logistics web app — front-end prototype.",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0"
+  }
+}

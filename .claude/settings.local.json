@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell($node = \\(Get-Command node -ErrorAction SilentlyContinue\\); if\\($node\\){\"node: $\\($node.Source\\) $\\(node --version\\)\"} else {\"node: NOT FOUND\"}; $npm = \\(Get-Command npm -ErrorAction SilentlyContinue\\); if\\($npm\\){\"npm: found\"} else {\"npm: NOT FOUND\"}; $py = \\(Get-Command python -ErrorAction SilentlyContinue\\); if\\($py\\){\"python: $\\($py.Source\\)\"} else {\"python: NOT FOUND\"})",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(mkdir -p \"/c/Users/USER/.gemini/antigravity-ide/scratch/padi-padi-bet/docs\" && echo created)",
+      "mcp__visualize__read_me",
+      "mcp__visualize__show_widget",
+      "Bash(echo \"--- runnable copy placed at errand-boy/padi-padi-bet ---\")",
+      "Bash(ls -la /c/Users/USER/.gemini/antigravity-ide/scratch/errand-boy/padi-padi-bet)",
+      "Bash(sed -i 's/Padi-Padi Bet/BOARDMAN/g; s/Padi-Padi/Boardman/g' index.html README.md docs/01-the-model.md package.json)",
+      "Bash(sed -i 's/Boardman • P2P Exchange/P2P Betting Exchange · Nigeria/g' index.html)",
+      "Bash(sed -i 's/\"padi-padi-bet\"/\"boardman\"/g' package.json)",
+      "Bash(curl -s --max-time 25 \"https://www.thesportsdb.com/api/v1/json/3/eventsnextleague.php?id=4328\")",
+      "Bash(echo \"---EXIT $?---\")",
+      "WebSearch",
+      "WebFetch(domain:nannews.ng)",
+      "Bash(docker version *)",
+      "Bash(echo \"exit=$?\")",
+      "mcp__Claude_in_Chrome__list_connected_browsers",
+      "PowerShell(& \"C:\\\\Program Files\\\\GitHub CLI\\\\gh.exe\" auth login --hostname github.com --git-protocol https --web)",
+      "mcp__Claude_in_Chrome__switch_browser",
+      "Bash(cp \"/c/Users/USER/.gemini/antigravity-ide/scratch/boardman/index.html\" \"/c/Users/USER/.gemini/antigravity-ide/scratch/errand-boy/padi-padi-bet/index.html\" && echo synced)",
+      "Bash(tail -3 \"/c/Users/USER/.claude/projects/C--Users-USER--gemini-antigravity-ide-scratch-errand-boy/memory/padi-padi-bet-project.md\")",
+      "WebFetch(domain:chowdeck.com)",
+      "Bash(git init *)",
+      "Bash(git config *)",
+      "Bash(git add *)",
+      "Bash(git rm *)"
+    ]
+  }
+}

@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Errand Boy - Premium Lagos Concierge & Logistics</title>
+    <meta name="description" content="Errand Boy — premium Lagos concierge & logistics. Market runs, vetted chauffeurs, dispatch riders, and luxury laundry with live tracking, in-app wallet, and an AI runner chat.">
+    <meta name="theme-color" content="#0d0d10">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+
+    <!-- Open Graph / social preview -->
+    <meta property="og:title" content="Errand Boy — Premium Lagos Concierge & Logistics">
+    <meta property="og:description" content="Luxury errands, handled. Live tracking, in-app wallet, and an AI runner chat for the discerning residents of Lagos.">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="errand_boy_ios_launch.png">
+    <meta name="twitter:card" content="summary_large_image">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,500;1,600;1,700&display=swap" rel="stylesheet">
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-shell">
+        <!-- Top App Header -->
+        <header class="app-header">
+            <div class="header-left">
+                <div class="logo" id="app-logo">
+                    <span class="logo-icon"><span class="logo-init-e">E</span><span class="logo-init-b">B</span></span>
+                    <span class="logo-text">ERRAND BOY</span>
+                </div>
+                <div class="location-picker">
+                    <span class="location-icon" aria-hidden="true">📍</span>
+                    <select id="location-select" onchange="changeLocation()" aria-label="Select your delivery location">
+                        <option value="banana-island">Banana Island, Ikoyi</option>
+                        <option value="ikoyi">Ikoyi (Main)</option>
+                        <option value="victoria-island">Victoria Island</option>
+                        <option value="lekki-1">Lekki Phase 1</option>
+                        <option value="ikate">Ikate, Lekki</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="header-right">
+                <div class="vip-status">
+                    <span class="vip-badge">OBSIDIAN VIP</span>
+                </div>
+                <div class="wallet-card" id="wallet-card-trigger" onclick="openWalletModal()">
+                    <span class="wallet-label">Balance</span>
+                    <span class="wallet-val" id="wallet-balance">₦185,500.00</span>
+                    <span class="wallet-plus">+</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Banner -->
+        <section class="hero-banner">
+            <div class="hero-content">
+                <h2>Elite Concierge & Logistics</h2>
+                <p>Curated courier, chauffeur, personal shopping, and luxury errands for the discerning residents of Lagos.</p>
+                <div class="hero-stats">
+                    <div class="stat-item">
+                        <span class="stat-number" id="stat-active">0</span>
+                        <span class="stat-label">Active Errands</span>
+                    </div>
+                    <div class="stat-divider"></div>
+                    <div class="stat-item">
+                        <span class="stat-number" id="stat-completed">14</span>
+                        <span class="stat-label">Completed</span>
+                    </div>
+                </div>
+            </div>
+            <!-- Live Widgets (Weather & Traffic) -->
+            <div class="widgets-container">
+                <div class="widget-card weather-widget">
+                    <span class="widget-icon">☀</span>
+                    <div class="widget-info">
+                        <span class="widget-title">Lagos Weather</span>
+                        <span class="widget-value">31°C - Sunny</span>
+                    </div>
+                </div>
+                <div class="widget-card traffic-widget">
+                    <span class="widget-icon">🚗</span>
+                    <div class="widget-info">
+                        <span class="widget-title">Lekki Toll Gate</span>
+                        <span class="widget-value text-green" id="traffic-status">Light Traffic</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dashboard Layout -->
+        <main class="dashboard-grid">
+            <!-- Left Side: Service Catalog -->
+            <section class="services-section">
+                <h3 class="section-title">Exclusive Services</h3>
+                <div class="services-grid">
+                    <!-- Service 1: Market Run -->
+                    <div class="service-card" id="service-market" onclick="openBookingModal('market')">
+                        <div class="card-bg-glow"></div>
+                        <div class="service-icon">🛒</div>
+                        <h4>Market Run</h4>
+                        <p>Personal shopper for fresh foods and groceries at premium stores or local hubs.</p>
+                        <div class="service-footer">
+                            <span class="price-estimate">Est: ₦8,500</span>
+                            <span class="action-arrow">→</span>
+                        </div>
+                    </div>
+
+                    <!-- Service 2: Chauffeur Hire -->
+                    <div class="service-card" id="service-chauffeur" onclick="openBookingModal('chauffeur')">
+                        <div class="card-bg-glow"></div>
+                        <div class="service-icon">🚗</div>
+                        <h4>Hire Chauffeur</h4>
+                        <p>Hire vetted, professional personal drivers for airport pick-ups, business, or leisure.</p>
+                        <div class="service-footer">
+                            <span class="price-estimate">Est: ₦15,000/day</span>
+                            <span class="action-arrow">→</span>
+                        </div>
+                    </div>
+
+                    <!-- Service 3: Dispatch & Deliveries -->
+                    <div class="service-card" id="service-delivery" onclick="openBookingModal('delivery')">
+                        <div class="card-bg-glow"></div>
+                        <div class="service-icon">📦</div>
+                        <h4>Dispatch Rider</h4>
+                        <p>Instant secure deliveries between Lekki, Ikoyi, V.I. and surrounding areas.</p>
+                        <div class="service-footer">
+                            <span class="price-estimate">Est: ₦4,000</span>
+                            <span class="action-arrow">→</span>
+                        </div>
+                    </div>
+
+                    <!-- Service 4: Premium Laundry -->
+                    <div class="service-card" id="service-laundry" onclick="openBookingModal('laundry')">
+                        <div class="card-bg-glow"></div>
+                        <div class="service-icon">🧺</div>
+                        <h4>Luxury Laundry</h4>
+                        <p>Professional wash, dry clean, and iron with doorstep pickup & delivery service.</p>
+                        <div class="service-footer">
+                            <span class="price-estimate">Est: ₦6,500/bag</span>
+                            <span class="action-arrow">→</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transaction History Drawer inside Dashboard -->
+                <div class="transaction-history-card">
+                    <h4>Recent Obsidian Activity</h4>
+                    <div class="transaction-list" id="transaction-list">
+                        <div class="transaction-item">
+                            <span class="tx-icon refund">⚡</span>
+                            <div class="tx-details">
+                                <span class="tx-title">Wallet Funded</span>
+                                <span class="tx-date">Today, 09:30 AM</span>
+                            </div>
+                            <span class="tx-amount positive">+₦50,000.00</span>
+                        </div>
+                        <div class="transaction-item">
+                            <span class="tx-icon charge">📦</span>
+                            <div class="tx-details">
+                                <span class="tx-title">Dispatch - Ikoyi Courier</span>
+                                <span class="tx-date">Yesterday, 04:15 PM</span>
+                            </div>
+                            <span class="tx-amount negative">-₦4,000.00</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Side: Live Errand Tracking & Utilities -->
+            <div class="right-column">
+                <!-- Live Errand Tracker -->
+                <section class="tracker-section">
+                    <div class="tracker-header">
+                        <h3 class="section-title">Live Errand Tracker</h3>
+                        <span class="live-indicator"><span class="pulse-dot"></span>Live Map</span>
+                    </div>
+                    
+                    <div class="tracker-card">
+                        <!-- No active errands state -->
+                        <div class="no-errands-state" id="no-errands-state">
+                            <div class="placeholder-icon">🗺</div>
+                            <p>No active errands at the moment.</p>
+                            <button class="book-first-btn" id="btn-book-first" onclick="openBookingModal('market')">Book Your First Errand</button>
+                        </div>
+                        
+                        <!-- Active errand container -->
+                        <div class="active-tracker-layout" id="active-tracker-layout" style="display: none;">
+                            <div class="errand-info-row">
+                                <div>
+                                    <h5 id="track-title">Market Run - Balogun</h5>
+                                    <span class="track-id" id="track-id">ID: EB-4912</span>
+                                </div>
+                                <span class="track-status-pill" id="track-status">Purchasing Items</span>
+                            </div>
+
+                            <!-- New Interactive Canvas Map -->
+                            <div class="map-wrapper">
+                                <canvas id="map-canvas" width="340" height="180" role="img" aria-label="Live map showing your runner's route across Lagos"></canvas>
+                                <span class="map-label map-label-banana">Banana Island</span>
+                                <span class="map-label map-label-lekki">Lekki</span>
+                            </div>
+                            
+                            <!-- Custom Progress Bar -->
+                            <div class="progress-bar-container">
+                                <div class="progress-bar-fill" id="track-progress" style="width: 0%;"></div>
+                            </div>
+                            
+                            <div class="eta-row">
+                                <span>GPS: <span id="track-gps" style="color: var(--color-orange-bright); font-family: monospace; font-weight: bold; margin-left: 5px;">6.43580° N, 3.50420° E</span></span>
+                                <div>
+                                    <span>ETA:</span>
+                                    <span class="eta-time" id="track-eta">45 mins</span>
+                                </div>
+                            </div>
+
+                            <hr class="tracker-divider">
+
+                            <!-- Timeline Logs & Chat Trigger -->
+                            <div class="tracker-action-row">
+                                <h4>Errand Status logs</h4>
+                                <button class="chat-toggle-btn" id="chat-toggle-btn" onclick="toggleChatDrawer()">
+                                    💬 Chat with Runner <span class="chat-badge" id="chat-badge" style="display: none;">1</span>
+                                </button>
+                            </div>
+
+                            <div class="timeline-logs" id="track-logs">
+                                <!-- Dynamic logs inserted here -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Utilities Center -->
+                <section class="utilities-section">
+                    <h3 class="section-title">Quick Utility Hub</h3>
+                    <div class="utilities-card">
+                        <div class="util-tabs">
+                            <button class="util-tab active" id="tab-airtime" onclick="switchUtilTab('airtime')">📱 Airtime</button>
+                            <button class="util-tab" id="tab-power" onclick="switchUtilTab('power')">⚡ Power</button>
+                            <button class="util-tab" id="tab-cable" onclick="switchUtilTab('cable')">📺 Cable TV</button>
+                        </div>
+
+                        <!-- Form: Airtime -->
+                        <form id="form-airtime" class="util-form active-form" onsubmit="handleUtilitySubmit(event, 'airtime')">
+                            <div class="form-group-row">
+                                <div class="form-input-wrapper">
+                                    <label for="airtime-provider">Network Provider</label>
+                                    <select id="airtime-provider" required>
+                                        <option value="mtn">MTN Nigeria</option>
+                                        <option value="airtel">Airtel Nigeria</option>
+                                        <option value="glo">Glo Mobile</option>
+                                        <option value="9mobile">9mobile</option>
+                                    </select>
+                                </div>
+                                <div class="form-input-wrapper">
+                                    <label for="airtime-amount">Amount (₦)</label>
+                                    <input type="number" min="100" max="50000" placeholder="5,000" required id="airtime-amount">
+                                </div>
+                            </div>
+                            <div class="form-input-wrapper">
+                                <label for="airtime-phone">Phone Number</label>
+                                <input type="tel" placeholder="e.g. 0803 123 4567" required id="airtime-phone">
+                            </div>
+                            <button type="submit" class="util-btn" id="btn-submit-airtime">Purchase Airtime</button>
+                        </form>
+
+                        <!-- Form: Power -->
+                        <form id="form-power" class="util-form" onsubmit="handleUtilitySubmit(event, 'power')">
+                            <div class="form-group-row">
+                                <div class="form-input-wrapper">
+                                    <label for="power-provider">Electricity Provider</label>
+                                    <select id="power-provider" required>
+                                        <option value="ekedc">Eko Electricity (EKEDC)</option>
+                                        <option value="ikedc">Ikeja Electricity (IKEDC)</option>
+                                    </select>
+                                </div>
+                                <div class="form-input-wrapper">
+                                    <label for="power-amount">Amount (₦)</label>
+                                    <input type="number" min="1000" max="1000000" placeholder="25,000" required id="power-amount">
+                                </div>
+                            </div>
+                            <div class="form-input-wrapper">
+                                <label for="power-meter">Meter Number</label>
+                                <input type="text" placeholder="e.g. 0419 2381 293" required id="power-meter">
+                            </div>
+                            <button type="submit" class="util-btn" id="btn-submit-power">Pay Power Bill</button>
+                        </form>
+
+                        <!-- Form: Cable TV -->
+                        <form id="form-cable" class="util-form" onsubmit="handleUtilitySubmit(event, 'cable')">
+                            <div class="form-group-row">
+                                <div class="form-input-wrapper">
+                                    <label for="cable-plan">Service Plan</label>
+                                    <select id="cable-plan" required>
+                                        <option value="dstv-premium">DSTV Premium (₦29,500)</option>
+                                        <option value="dstv-compact">DSTV Compact Plus (₦19,800)</option>
+                                        <option value="dstv-confam">DSTV Confam (₦9,300)</option>
+                                        <option value="gotv-max">GOtv Max (₦4,850)</option>
+                                    </select>
+                                </div>
+                                <div class="form-input-wrapper">
+                                    <label for="cable-iuc">SmartCard / IUC Number</label>
+                                    <input type="text" placeholder="e.g. 1029384756" required id="cable-iuc">
+                                </div>
+                            </div>
+                            <button type="submit" class="util-btn" id="btn-submit-cable">Renew Subscription</button>
+                        </form>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- CHAT DRAWER PANEL -->
+    <div class="chat-drawer" id="chat-drawer-container">
+        <div class="chat-header">
+            <div class="chat-runner-profile">
+                <div class="chat-runner-avatar">🚴</div>
+                <div class="chat-runner-info">
+                    <h5 id="chat-runner-name">Runner Tunde</h5>
+                    <span>Errand Boy Courier</span>
+                </div>
+            </div>
+            <div class="chat-header-actions">
+                <button class="chat-key-btn" onclick="openApiKeyModal()" title="Configure Gemini API Key" aria-label="Configure Gemini API Key">🔑</button>
+                <button class="chat-close-btn" onclick="toggleChatDrawer()" aria-label="Close chat">&times;</button>
+            </div>
+        </div>
+        <div class="chat-messages" id="chat-messages-box">
+            <!-- Messages inserted here -->
+        </div>
+        <form class="chat-input-area" onsubmit="sendClientChatMessage(event)">
+            <input type="text" placeholder="Send instructions to your runner..." id="chat-input-field" required>
+            <button type="submit" class="chat-send-btn">Send</button>
+        </form>
+    </div>
+
+    <!-- BOOKING MODALS CONTAINER -->
+    <div class="modal-overlay" id="booking-modal">
+        <div class="modal-card" role="dialog" aria-modal="true" aria-label="Book a service">
+            <button class="close-modal" onclick="closeBookingModal()" aria-label="Close dialog">&times;</button>
+            
+            <!-- Market Run Modal -->
+            <div id="modal-content-market" class="modal-sub-content">
+                <h3>🛍️ Book a Market Run</h3>
+                <p class="modal-desc">Send a concierge personal shopper to retrieve fresh foods, groceries, or essentials from Balogun Market, Jakande, or luxury superstores.</p>
+                <form id="form-book-market" onsubmit="submitErrand(event, 'Market Run')">
+                    <div class="form-input-wrapper">
+                        <label for="market-loc">Preferred Shopping Location</label>
+                        <select id="market-loc">
+                            <option value="Jakande Market, Lekki">Jakande Organic Market, Lekki</option>
+                            <option value="Balogun Market, Lagos Island">Balogun Market (Bulk Foods)</option>
+                            <option value="Spar, Lekki">Spar Supermarket, Lekki</option>
+                            <option value="Ebeano Supermarket, Lekki">Prince Ebeano Supermarket</option>
+                        </select>
+                    </div>
+                    <div class="form-input-wrapper">
+                        <label for="market-items">Shopping List (separate items with commas)</label>
+                        <textarea rows="3" placeholder="e.g., Basket of Tomatoes, 1 bag of rice, Fresh Habaneros, Carton of water" required id="market-items"></textarea>
+                    </div>
+                    <div class="form-group-row">
+                        <div class="form-input-wrapper">
+                            <label for="market-urgency">Delivery Urgency</label>
+                            <select id="market-urgency">
+                                <option value="standard">Standard (Next 3 hrs) - ₦8,500</option>
+                                <option value="express">VIP Express (Next 90 mins) - ₦14,000</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" class="modal-submit-btn" id="btn-submit-book-market">Hire Market Shopper</button>
+                </form>
+            </div>
+
+            <!-- Chauffeur Modal -->
+            <div id="modal-content-chauffeur" class="modal-sub-content">
+                <h3>🚗 Hire Vetted Chauffeur</h3>
+                <p class="modal-desc">Hire a professional, background-checked personal driver. Fully verified for maximum security and local road familiarity.</p>
+                <form id="form-book-chauffeur" onsubmit="submitErrand(event, 'Chauffeur Hire')">
+                    <div class="form-group-row">
+                        <div class="form-input-wrapper">
+                            <label for="chauffeur-type">Driver Category</label>
+                            <select id="chauffeur-type">
+                                <option value="standard">Executive Sedan Driver - ₦15,000/day</option>
+                                <option value="vip">SUV / Bulletproof Fleet Driver - ₦30,000/day</option>
+                                <option value="escort">MOPOL Escort Driver - ₦55,000/day</option>
+                            </select>
+                        </div>
+                        <div class="form-input-wrapper">
+                            <label for="chauffeur-duration">Duration</label>
+                            <select id="chauffeur-duration">
+                                <option value="1">1 Day</option>
+                                <option value="2">2 Days</option>
+                                <option value="5">5 Days</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-input-wrapper">
+                        <label for="chauffeur-pickup">Pickup Address & Time</label>
+                        <input type="text" placeholder="e.g., House A, Close 4, Banana Island Road" required id="chauffeur-pickup">
+                    </div>
+                    <button type="submit" class="modal-submit-btn" id="btn-submit-book-chauffeur">Hire Chauffeur</button>
+                </form>
+            </div>
+
+            <!-- Dispatch Rider Modal -->
+            <div id="modal-content-delivery" class="modal-sub-content">
+                <h3>📦 Request Dispatch Rider</h3>
+                <p class="modal-desc">Fast, secure document or parcel shipping within the Lekki-Ikoyi corridor.</p>
+                <form id="form-book-delivery" onsubmit="submitErrand(event, 'Dispatch Rider')">
+                    <div class="form-input-wrapper">
+                        <label for="delivery-package">What are we delivering?</label>
+                        <input type="text" placeholder="e.g., VIP Party Invitations, Laptop, Signed Contracts" required id="delivery-package">
+                    </div>
+                    <div class="form-group-row">
+                        <div class="form-input-wrapper">
+                            <label for="delivery-pickup">Pickup Location</label>
+                            <input type="text" placeholder="Lekki Phase 1" required id="delivery-pickup">
+                        </div>
+                        <div class="form-input-wrapper">
+                            <label for="delivery-dropoff">Drop-off Location</label>
+                            <input type="text" placeholder="Banana Island, Ikoyi" required id="delivery-dropoff">
+                        </div>
+                    </div>
+                    <div class="form-input-wrapper">
+                        <label for="delivery-class">Delivery Class</label>
+                        <select id="delivery-class">
+                            <option value="standard">Standard Dispatch - ₦4,000</option>
+                            <option value="bullet">Instant Priority Bullet (No stops) - ₦7,500</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="modal-submit-btn" id="btn-submit-book-delivery">Request Rider</button>
+                </form>
+            </div>
+
+            <!-- Premium Laundry Modal -->
+            <div id="modal-content-laundry" class="modal-sub-content">
+                <h3>🧺 Premium Laundry Concierge</h3>
+                <p class="modal-desc">VVIP garment handling. Laundry and dry cleaning picked up, treated with care, and returned pristine.</p>
+                <form id="form-book-laundry" onsubmit="submitErrand(event, 'Luxury Laundry')">
+                    <div class="form-group-row">
+                        <div class="form-input-wrapper">
+                            <label for="laundry-bags">Bag Quantity</label>
+                            <select id="laundry-bags">
+                                <option value="1">1 Standard VIP Bag - ₦6,500</option>
+                                <option value="2">2 Standard VIP Bags - ₦12,500</option>
+                                <option value="4">4 Standard VIP Bags - ₦24,000</option>
+                            </select>
+                        </div>
+                        <div class="form-input-wrapper">
+                            <label for="laundry-type">Garment Care Class</label>
+                            <select id="laundry-type">
+                                <option value="wash-fold">Standard Wash & Fold</option>
+                                <option value="dry-clean">Dry Cleaning (Delicate/Suits) (+₦5,000)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-input-wrapper">
+                        <label for="laundry-time">Pickup Date & Time</label>
+                        <input type="datetime-local" required id="laundry-time">
+                    </div>
+                    <button type="submit" class="modal-submit-btn" id="btn-submit-book-laundry">Schedule Pickup</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- WALLET MODAL -->
+    <div class="modal-overlay" id="wallet-modal">
+        <div class="modal-card wallet-modal-card" role="dialog" aria-modal="true" aria-label="Fund wallet">
+            <button class="close-modal" onclick="closeWalletModal()" aria-label="Close dialog">&times;</button>
+            <h3>💳 Fund Obsidian Wallet</h3>
+            <p class="modal-desc">Fund your VIP Errand Boy wallet. Choose your payment method or connect a premium Black Card.</p>
+            
+            <div class="wallet-balance-box">
+                <span>Current Balance</span>
+                <h2 id="wallet-balance-modal">₦185,500.00</h2>
+            </div>
+
+            <!-- VIP Card Graphic -->
+            <div class="credit-card-container">
+                <div class="obsidian-credit-card">
+                    <div class="card-glow"></div>
+                    <div class="card-header-logo">
+                        <span class="card-brand">OBSIDIAN PREMIUM</span>
+                        <span class="card-chip"></span>
+                    </div>
+                    <div class="card-number">•••• •••• •••• 8891</div>
+                    <div class="card-footer">
+                        <div class="card-holder">
+                            <span>CARD HOLDER</span>
+                            <strong>VIP CLIENT</strong>
+                        </div>
+                        <div class="card-expiry">
+                            <span>EXPIRES</span>
+                            <strong>12/29</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <form id="form-wallet-topup" onsubmit="handleTopUp(event)">
+                <div class="form-input-wrapper">
+                    <label for="topup-amount">Amount to Top Up (₦)</label>
+                    <input type="number" min="5000" max="10000000" placeholder="50,000" required id="topup-amount">
+                </div>
+                <div class="form-input-wrapper">
+                    <label for="topup-method">Funding Method</label>
+                    <select id="topup-method">
+                        <option value="card-vip">Access Signature Card (**** 8891)</option>
+                        <option value="card-zenith">Zenith Platinum Visa (**** 3320)</option>
+                        <option value="bank-transfer">Instant Wema Bank Transfer (Virtual Account)</option>
+                    </select>
+                </div>
+                <button type="submit" class="modal-submit-btn" id="btn-submit-topup">Process Payment</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- API KEY CONFIG MODAL -->
+    <div class="modal-overlay" id="api-key-modal">
+        <div class="modal-card" role="dialog" aria-modal="true" aria-label="Configure Gemini AI">
+            <button class="close-modal" onclick="closeApiKeyModal()" aria-label="Close dialog">&times;</button>
+            <h3>🔑 Configure Gemini AI Runner</h3>
+            <p class="modal-desc">Enter your Gemini API Key to enable context-aware, realistic runner conversations powered by Gemini 2.5 Flash.</p>
+            
+            <form id="form-api-key" onsubmit="saveApiKey(event)">
+                <div class="form-input-wrapper">
+                    <label for="gemini-api-key">Gemini API Key</label>
+                    <input type="password" placeholder="AIzaSy..." id="gemini-api-key" required>
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="button" class="modal-submit-btn" style="background: var(--color-bg-primary); border: 1px solid var(--color-glass-border); color: var(--color-text-grey);" onclick="clearApiKey()">Clear Key</button>
+                    <button type="submit" class="modal-submit-btn" id="btn-save-api-key">Save Key</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION -->
+    <div class="toast-notification" id="toast-notify">
+        <span id="toast-message">New errand booked successfully!</span>
+    </div>
+
+    <!-- App JavaScript -->
+    <script src="app.js"></script>
+</body>
+</html>

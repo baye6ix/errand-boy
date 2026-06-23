@@ -1,0 +1,24 @@
+# Secrets & local config
+.env
+.env.local
+*.local
+
+# Dependencies
+node_modules/
+
+# Test artifacts
+test-results/
+playwright-report/
+playwright/.cache/
+
+# Separate project that ended up nested here — not part of Errand Boy
+boardman/
+
+# OS / editor cruft
+Thumbs.db
+.DS_Store
+.vscode/
+.idea/
+
+# Excluded from push until gh token has `workflow` scope (file kept locally)
+.github/workflows/
