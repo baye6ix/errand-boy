@@ -153,42 +153,85 @@ body::after {
 
 .logo { display: flex; align-items: center; gap: 13px; cursor: pointer; }
 
+/* Emblem tile — crafted squircle with bevel, sheen and a gold prestige pip */
 .logo-icon {
-    height: 46px;
-    padding: 0 13px;
+    position: relative;
+    width: 48px;
+    height: 48px;
     background: var(--grad-ember);
-    color: #1a0a02;
-    font-family: var(--font-logo);
+    color: #1c0b03;
+    font-family: var(--font-brand);
     font-weight: 800;
-    font-size: 1.5rem;
+    font-size: 1.4rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 13px;
-    box-shadow: 0 6px 22px var(--color-orange-glow), inset 0 1px 0 rgba(255,255,255,0.35);
+    border-radius: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow:
+        0 8px 24px var(--color-orange-glow),
+        inset 0 1.5px 0 rgba(255, 255, 255, 0.5),
+        inset 0 -6px 12px rgba(120, 30, 0, 0.35);
     transition: var(--transition-smooth);
     letter-spacing: -2px;
+    overflow: hidden;
+}
+/* top sheen */
+.logo-icon::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 50%;
+    background: linear-gradient(180deg, rgba(255,255,255,0.35), transparent);
+    pointer-events: none;
+}
+/* gold prestige pip */
+.logo-icon::before {
+    content: '';
+    position: absolute;
+    top: 7px; right: 7px;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--grad-gold);
+    box-shadow: 0 0 7px rgba(255, 194, 77, 0.8);
+    z-index: 2;
 }
 
-.logo-init-e { display: inline-block; transform: scaleX(-1); margin-right: 1px; }
-.logo-init-b { display: inline-block; }
+.logo-init-e, .logo-init-b { position: relative; z-index: 1; display: inline-block; }
+.logo-init-e { transform: scaleX(-1); margin-right: 1px; }
 
 .logo:hover .logo-icon {
-    transform: rotate(-5deg) scale(1.05);
-    box-shadow: 0 10px 30px rgba(255, 90, 31, 0.5), inset 0 1px 0 rgba(255,255,255,0.4);
+    transform: rotate(-4deg) scale(1.06);
+    box-shadow:
+        0 12px 32px rgba(255, 90, 31, 0.5),
+        inset 0 1.5px 0 rgba(255, 255, 255, 0.55),
+        inset 0 -6px 12px rgba(120, 30, 0, 0.35);
 }
+
+/* Wordmark lockup: two-tone name + concierge kicker */
+.logo-lockup { display: flex; flex-direction: column; justify-content: center; line-height: 1; gap: 4px; }
 
 .logo-text {
     font-family: var(--font-brand);
     font-weight: 800;
-    font-size: 1.4rem;
-    letter-spacing: 0.5px;
-    background: linear-gradient(120deg, #ffffff 30%, #ffd9c2 70%, var(--color-orange) 100%);
+    font-size: 1.32rem;
+    letter-spacing: 0.4px;
+    color: var(--color-text-white);
+    transition: var(--transition-smooth);
+    white-space: nowrap;
+}
+.logo-accent {
+    background: var(--grad-ember);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
-    filter: drop-shadow(0 2px 12px rgba(255, 90, 31, 0.18));
-    transition: var(--transition-smooth);
+}
+.logo-kicker {
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 0.58rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--color-text-dark);
 }
 
 .location-picker {

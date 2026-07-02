@@ -26,7 +26,27 @@
       "Bash(git init *)",
       "Bash(git config *)",
       "Bash(git add *)",
-      "Bash(git rm *)"
+      "Bash(git rm *)",
+      "Bash(git commit --quiet -m ' *)",
+      "Bash(git -C \"/c/Users/USER/.gemini/antigravity-ide/scratch/boardman\" rev-parse --show-toplevel)",
+      "Bash(git -C \"/c/Users/USER/.gemini/antigravity-ide/scratch/boardman\" remote get-url origin)",
+      "Bash(git -C \"/c/Users/USER/.gemini/antigravity-ide/scratch/errand-boy\" rev-parse --show-toplevel)",
+      "Bash(git -C \"/c/Users/USER/.gemini/antigravity-ide/scratch/errand-boy\" remote get-url origin)",
+      "Bash(git -C \"/c/Users/USER/Documents/Boardman\" rev-parse --show-toplevel)",
+      "Bash(gh repo *)",
+      "Bash(gh auth *)",
+      "Bash(git remote *)",
+      "Bash(git push *)",
+      "Bash(gh api *)",
+      "Bash(curl -s -o /dev/null -w '%{http_code}' https://baye6ix.github.io/errand-boy/landing.html)",
+      "Bash(echo \"landing: $\\(curl -s -o /dev/null -w '%{http_code}' https://baye6ix.github.io/errand-boy/landing.html\\)\")",
+      "Bash(curl -s -o /dev/null -w '%{http_code}' https://baye6ix.github.io/errand-boy/index.html)",
+      "Bash(echo \"app:     $\\(curl -s -o /dev/null -w '%{http_code}' https://baye6ix.github.io/errand-boy/index.html\\)\")",
+      "Bash(curl -s -o /dev/null -w '%{http_code}' https://baye6ix.github.io/errand-boy/)",
+      "Bash(curl -s https://baye6ix.github.io/errand-boy/)",
+      "mcp__Claude_in_Chrome__navigate",
+      "mcp__Claude_in_Chrome__tabs_context_mcp",
+      "mcp__Claude_in_Chrome__get_page_text"
     ]
   }
 }
