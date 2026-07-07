@@ -24,5 +24,6 @@
     bookErrand: (type, cost) => req("POST", "/errands", { type, cost }),
     completeErrand: (errandId) => req("POST", "/errands/complete", { errandId }),
     listTransactions: () => req("GET", "/transactions"),
+    chat: (payload) => req("POST", "/chat", payload),
   };
 })();

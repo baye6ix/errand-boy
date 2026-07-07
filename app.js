@@ -567,7 +567,7 @@ function toggleChatDrawer() {
     }
 }
 
-function sendClientChatMessage(event) {
+async function sendClientChatMessage(event) {
     event.preventDefault();
     const input = document.getElementById('chat-input-field');
     const text = input.value.trim();
@@ -575,23 +575,72 @@ function sendClientChatMessage(event) {
     appendChatBubble(text, 'client');
     input.value = '';
 
+    // 1) Preferred path: server-side AI proxy (key held in Secrets Manager)
+    if (window.ebAuth && ebAuth.current()) {
+        showTypingIndicator();
+        try {
+            const ctx = buildRunnerContext();
+            const r = await ebApi.chat({ message: text, system: ctx.system, history: ctx.history });
+            if (r && r.configured && r.reply) {
+                removeTypingIndicator();
+                appendChatBubble(r.reply, 'runner');
+                if (state.activeErrand) {
+                    state.activeErrand.chatHistory = state.activeErrand.chatHistory || [];
+                    state.activeErrand.chatHistory.push({ role: 'user', parts: [{ text }] });
+                    state.activeErrand.chatHistory.push({ role: 'model', parts: [{ text: r.reply }] });
+                }
+                return;
+            }
+            removeTypingIndicator(); // proxy not configured → fall through
+        } catch (e) {
+            removeTypingIndicator();
+        }
+    }
+
+    // 2) Fallback: user's own browser-side Gemini key
     const apiKey = localStorage.getItem('gemini_api_key');
     if (apiKey && state.activeErrand) {
         showTypingIndicator();
         callGeminiAPI(text)
-            .then(reply => {
-                removeTypingIndicator();
-                appendChatBubble(reply, 'runner');
-            })
-            .catch(err => {
-                removeTypingIndicator();
-                console.error(err);
-                showToast('Gemini Error: ' + err.message);
-                fallbackSimulatedReply();
-            });
-    } else {
-        fallbackSimulatedReply();
+            .then(reply => { removeTypingIndicator(); appendChatBubble(reply, 'runner'); })
+            .catch(err => { removeTypingIndicator(); console.error(err); fallbackSimulatedReply(); });
+        return;
     }
+
+    // 3) Last resort: canned simulated reply
+    fallbackSimulatedReply();
+}
+
+// Builds the runner persona + errand context for the AI proxy.
+function buildRunnerContext() {
+    const errand = state.activeErrand;
+    const nameEl = document.getElementById('chat-runner-name');
+    const runnerName = nameEl ? nameEl.innerText : 'Runner Tunde';
+    const locSel = document.getElementById('location-select');
+    const locText = locSel ? locSel.options[locSel.selectedIndex].text : 'Lagos';
+
+    let details = '';
+    if (errand) {
+        const val = id => (document.getElementById(id) || {}).value || '';
+        if (errand.type === 'Market Run') details = 'Shopping list: ' + (val('market-items') || 'groceries') + '.';
+        else if (errand.type === 'Chauffeur Hire') details = 'Pickup: ' + (val('chauffeur-pickup') || 'Banana Island') + '.';
+        else if (errand.type === 'Dispatch Rider') details = 'Delivering: ' + (val('delivery-package') || 'a parcel') + '.';
+        else if (errand.type === 'Luxury Laundry') details = 'Luxury laundry pickup & care.';
+    }
+    const status = (document.getElementById('track-status') || {}).innerText || 'Active';
+    const eta = (document.getElementById('track-eta') || {}).innerText || 'Pending';
+
+    const system =
+        `You are ${runnerName}, a professional vetted concierge runner in Lagos for the luxury app 'Errand Boy'. ` +
+        `The client is an Obsidian VIP in ${locText}. ` +
+        (errand
+            ? `Active errand: ${errand.type} (ID ${errand.id}), status "${status}", ETA ${eta}. ${details} `
+            : `No active errand at the moment. `) +
+        `Reply in character, briefly (1-3 sentences), warm, polite and reassuring, with subtle Lagos flair ` +
+        `(e.g. "no wahala", "boss", "sir/ma"). Reference the errand details when relevant.`;
+
+    const history = (errand && errand.chatHistory) ? errand.chatHistory.slice(-10) : [];
+    return { system, history };
 }
 
 function fallbackSimulatedReply() {

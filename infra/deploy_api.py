@@ -33,7 +33,9 @@ def ensure_role():
                                        "logs:PutLogEvents"], "Resource": "*"},
         {"Effect": "Allow", "Action": ["dynamodb:GetItem", "dynamodb:PutItem",
                                        "dynamodb:UpdateItem", "dynamodb:Query",
-                                       "dynamodb:DeleteItem"], "Resource": "*"}]}
+                                       "dynamodb:DeleteItem"], "Resource": "*"},
+        {"Effect": "Allow", "Action": ["secretsmanager:GetSecretValue"],
+         "Resource": f"arn:aws:secretsmanager:{region}:{acct}:secret:errand-boy/*"}]}
     try:
         arn = iam.create_role(RoleName=ROLE, AssumeRolePolicyDocument=json.dumps(trust),
                               Description="Errand Boy API Lambda execution role")["Role"]["Arn"]
@@ -131,7 +133,7 @@ def ensure_api(lambda_arn, out):
     existing_routes = {r["RouteKey"] for r in api.get_routes(ApiId=api_id).get("Items", [])}
     routes = ["GET /wallet", "POST /wallet/fund", "POST /wallet/debit",
               "GET /errands", "POST /errands", "POST /errands/complete",
-              "GET /transactions"]
+              "GET /transactions", "POST /chat"]
     for rk in routes:
         if rk in existing_routes:
             continue
@@ -163,6 +165,7 @@ def main():
         "ERRANDS_TABLE": out["ErrandsTable"],
         "TRANSACTIONS_TABLE": out["TransactionsTable"],
         "WALLETS_TABLE": out["WalletsTable"],
+        "GEMINI_SECRET_ID": "errand-boy/gemini",
     }
     role_arn = ensure_role()
     lambda_arn = ensure_function(role_arn, env)

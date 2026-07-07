@@ -9,10 +9,32 @@ Routes (all require a Cognito JWT except CORS preflight, handled by the API):
 
 User identity comes from the verified JWT claims (sub), never from the client body.
 """
-import json, os, time, uuid
+import json, os, time, uuid, urllib.request, urllib.error
 from decimal import Decimal
 import boto3
 from boto3.dynamodb.conditions import Key
+
+_gemini_cache = {}
+
+def _gemini_key():
+    """Fetch the Gemini API key from Secrets Manager (cached). None if unset/placeholder."""
+    sid = os.environ.get("GEMINI_SECRET_ID")
+    if not sid:
+        return None
+    if "key" in _gemini_cache:
+        return _gemini_cache["key"]
+    try:
+        val = boto3.client("secretsmanager").get_secret_value(SecretId=sid)["SecretString"]
+        try:
+            key = json.loads(val).get("apiKey")
+        except (json.JSONDecodeError, AttributeError):
+            key = val
+        if not key or key.strip() in ("", "REPLACE_ME"):
+            return None  # don't cache "unconfigured" so a new key activates immediately
+        _gemini_cache["key"] = key
+        return key
+    except Exception:
+        return None
 
 ddb = boto3.resource("dynamodb")
 ERRANDS = ddb.Table(os.environ["ERRANDS_TABLE"])
@@ -130,6 +152,38 @@ def handler(event, context):
             ExpressionAttributeValues={":d": "Delivered", ":t": int(time.time())},
         )
         return _resp(200, {"ok": True})
+
+    # ——— AI runner chat (server-side Gemini proxy) ———
+    if path == "/chat" and method == "POST":
+        key = _gemini_key()
+        if not key:
+            return _resp(200, {"configured": False})
+        user_msg = (body.get("message") or "").strip()
+        if not user_msg:
+            return _resp(400, {"error": "message required"})
+        system = body.get("system") or (
+            "You are a professional, vetted personal concierge runner in Lagos, Nigeria "
+            "for the luxury app 'Errand Boy'. Reply in character, briefly (1-3 sentences), "
+            "warm, polite and reassuring, with subtle local flair (e.g. 'no wahala', 'boss').")
+        history = body.get("history") or []
+        contents = history + [{"role": "user", "parts": [{"text": user_msg}]}]
+        payload = {
+            "contents": contents,
+            "systemInstruction": {"parts": [{"text": system}]},
+            "generationConfig": {"maxOutputTokens": 160, "temperature": 0.7},
+        }
+        url = ("https://generativelanguage.googleapis.com/v1beta/models/"
+               "gemini-2.5-flash:generateContent?key=" + key)
+        req = urllib.request.Request(
+            url, data=json.dumps(payload).encode(),
+            headers={"Content-Type": "application/json"}, method="POST")
+        try:
+            with urllib.request.urlopen(req, timeout=12) as r:
+                data = json.loads(r.read())
+            text = data["candidates"][0]["content"]["parts"][0]["text"]
+            return _resp(200, {"configured": True, "reply": text})
+        except Exception:
+            return _resp(502, {"configured": True, "error": "AI service unavailable"})
 
     # ——— Transactions ———
     if path == "/transactions" and method == "GET":
