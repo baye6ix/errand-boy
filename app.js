@@ -25,10 +25,16 @@ const servicesCost = {
 };
 
 // ——— Initialize Application ———
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    initMapCanvas();
     updateWalletUI();
     updateStatsUI();
-    initMapCanvas();
+    const token = await ebAuth.getToken();
+    if (token) {
+        await ebEnterApp();
+    } else {
+        ebShowPanel('signin');
+    }
 });
 
 // ——— UI Update Helpers ———
@@ -101,22 +107,30 @@ function switchUtilTab(tabName) {
 }
 
 // ——— Wallet Top-Up ———
-function handleTopUp(event) {
+async function handleTopUp(event) {
     event.preventDefault();
     const input = document.getElementById('topup-amount');
     const val = parseFloat(input.value);
-    if (val && val > 0) {
-        state.walletBalance += val;
+    if (!(val > 0)) return;
+    const btn = document.getElementById('btn-submit-topup');
+    if (btn) btn.disabled = true;
+    try {
+        const r = await ebApi.fundWallet(val);
+        state.walletBalance = Number(r.balance) || 0;
         updateWalletUI();
         closeWalletModal();
-        addTransaction('⚡', 'refund', 'Wallet Funded', '+' + formatNaira(val), true);
+        await reloadTransactions();
         showToast('Successful: Account funded with ' + formatNaira(val));
         input.value = '';
+    } catch (ex) {
+        showToast('Funding failed: ' + (ex.error || ex.message || 'error'));
+    } finally {
+        if (btn) btn.disabled = false;
     }
 }
 
 // ——— Utility Payments ———
-function handleUtilitySubmit(event, type) {
+async function handleUtilitySubmit(event, type) {
     event.preventDefault();
     let cost = 0;
     let desc = '';
@@ -139,16 +153,18 @@ function handleUtilitySubmit(event, type) {
         desc = 'Cable TV (' + plan.options[plan.selectedIndex].text + ') for IUC ' + iuc;
     }
 
-    if (state.walletBalance < cost) {
-        showToast('Error: Insufficient balance. Please fund your wallet.');
-        return;
+    const form = event.target;
+    try {
+        const r = await ebApi.debitWallet(cost, desc);
+        state.walletBalance = Number(r.balance) || 0;
+        updateWalletUI();
+        await reloadTransactions();
+        showToast('Payment Approved: ' + desc);
+        form.reset();
+    } catch (ex) {
+        if (ex.status === 402) showToast('Error: Insufficient balance. Please fund your wallet.');
+        else showToast('Payment failed: ' + (ex.error || ex.message || 'error'));
     }
-
-    state.walletBalance -= cost;
-    updateWalletUI();
-    addTransaction('📱', 'charge', desc, '-' + formatNaira(cost), false);
-    showToast('Payment Approved: ' + desc);
-    event.target.reset();
 }
 
 // ——— Transaction History Helper ———
@@ -167,7 +183,7 @@ function addTransaction(icon, iconClass, title, amount, isPositive) {
 }
 
 // ——— Errand Booking Handler ———
-function submitErrand(event, errandType) {
+async function submitErrand(event, errandType) {
     event.preventDefault();
 
     let cost = servicesCost[errandType] || 5000;
@@ -194,36 +210,37 @@ function submitErrand(event, errandType) {
         if (lType === 'dry-clean') cost += 5000;
     }
 
-    if (state.walletBalance < cost) {
-        showToast('Error: Insufficient wallet balance to hire Errand Boy.');
-        return;
-    }
-
     if (state.activeErrand) {
         showToast('You already have an active errand running. Track it on your dashboard.');
         closeBookingModal();
         return;
     }
 
-    state.walletBalance -= cost;
-    state.activeErrandsCount = 1;
-    updateWalletUI();
-    updateStatsUI();
-    closeBookingModal();
+    const form = event.target;
+    try {
+        const r = await ebApi.bookErrand(errandType, cost);
+        state.walletBalance = Number(r.balance) || 0;
+        state.activeErrandsCount = 1;
+        updateWalletUI();
+        updateStatsUI();
+        closeBookingModal();
 
-    const errandId = 'EB-' + Math.floor(1000 + Math.random() * 9000);
-    state.activeErrand = {
-        id: errandId,
-        type: errandType,
-        step: 0,
-        cost: cost,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
+        state.activeErrand = {
+            id: r.errand.errandId,
+            type: errandType,
+            step: 0,
+            cost: cost,
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        };
 
-    addTransaction('🏃', 'charge', errandType + ' (' + errandId + ')', '-' + formatNaira(cost), false);
-    showToast('Concierge booked: ' + errandType + ' is now active.');
-    startSimulatedTracking();
-    event.target.reset();
+        await reloadTransactions();
+        showToast('Concierge booked: ' + errandType + ' is now active.');
+        startSimulatedTracking();
+        form.reset();
+    } catch (ex) {
+        if (ex.status === 402) showToast('Error: Insufficient wallet balance to hire Errand Boy.');
+        else showToast('Booking failed: ' + (ex.error || ex.message || 'error'));
+    }
 }
 
 // ==========================================
@@ -864,3 +881,148 @@ document.addEventListener('click', (e) => {
     if (e.target.id === 'wallet-modal') closeWalletModal();
     if (e.target.id === 'api-key-modal') closeApiKeyModal();
 });
+
+// ==========================================
+// AUTH GATE + CLOUD STATE (Cognito + API)
+// ==========================================
+let pendingSignup = null;
+
+function ebShowPanel(name) {
+    document.body.classList.remove('authed');
+    document.getElementById('auth-gate').style.display = 'flex';
+    ['signin', 'signup', 'confirm'].forEach(p => {
+        const el = document.getElementById('auth-' + p);
+        if (el) el.style.display = (p === name) ? 'flex' : 'none';
+    });
+}
+
+async function ebDoSignIn(event) {
+    event.preventDefault();
+    const email = document.getElementById('si-email').value.trim();
+    const pass = document.getElementById('si-pass').value;
+    const err = document.getElementById('si-error');
+    err.innerText = '';
+    try {
+        await ebAuth.signIn(email, pass);
+        await ebEnterApp();
+    } catch (ex) {
+        err.innerText = ex.message || 'Could not sign in.';
+    }
+}
+
+async function ebDoSignUp(event) {
+    event.preventDefault();
+    const name = document.getElementById('su-name').value.trim();
+    const email = document.getElementById('su-email').value.trim();
+    const pass = document.getElementById('su-pass').value;
+    const err = document.getElementById('su-error');
+    err.innerText = '';
+    try {
+        await ebAuth.signUp(email, pass, name);
+        pendingSignup = { email, pass };
+        document.getElementById('cf-email').innerText = email;
+        ebShowPanel('confirm');
+    } catch (ex) {
+        err.innerText = ex.message || 'Could not create account.';
+    }
+}
+
+async function ebDoConfirm(event) {
+    event.preventDefault();
+    const code = document.getElementById('cf-code').value.trim();
+    const err = document.getElementById('cf-error');
+    err.innerText = '';
+    if (!pendingSignup) { ebShowPanel('signin'); return; }
+    try {
+        await ebAuth.confirm(pendingSignup.email, code);
+        await ebAuth.signIn(pendingSignup.email, pendingSignup.pass);
+        pendingSignup = null;
+        await ebEnterApp();
+    } catch (ex) {
+        err.innerText = ex.message || 'Invalid code.';
+    }
+}
+
+async function ebResend() {
+    if (!pendingSignup) return;
+    try {
+        await ebAuth.resend(pendingSignup.email);
+        showToast('Verification code resent.');
+    } catch (ex) {
+        showToast('Could not resend: ' + (ex.message || 'error'));
+    }
+}
+
+function ebDoSignOut() {
+    ebAuth.signOut();
+    location.reload();
+}
+
+async function ebEnterApp() {
+    const auth = ebAuth.current();
+    document.body.classList.add('authed');
+    const gate = document.getElementById('auth-gate');
+    if (gate) gate.style.display = 'none';
+
+    const chip = document.getElementById('user-chip');
+    if (chip && auth) {
+        chip.style.display = 'flex';
+        document.getElementById('user-initial').innerText = (auth.email || 'U')[0].toUpperCase();
+        document.getElementById('user-email').innerText = auth.email || '';
+    }
+    await loadCloudState();
+}
+
+async function loadCloudState() {
+    try {
+        const [w, t, er] = await Promise.all([
+            ebApi.getWallet(),
+            ebApi.listTransactions(),
+            ebApi.listErrands()
+        ]);
+        state.walletBalance = Number(w.balance) || 0;
+        updateWalletUI();
+        renderTransactions(t.transactions || []);
+        state.completedErrandsCount = (er.errands || []).length;
+        state.activeErrandsCount = 0;
+        updateStatsUI();
+    } catch (ex) {
+        if (ex.status === 401) { ebAuth.signOut(); ebShowPanel('signin'); return; }
+        showToast('Could not load your account. Please retry.');
+    }
+}
+
+function renderTransactions(items) {
+    const list = document.getElementById('transaction-list');
+    if (!list) return;
+    list.innerHTML = '';
+    if (!items.length) {
+        list.innerHTML = '<p style="color:var(--color-text-dark);font-size:0.85rem;">No activity yet — fund your wallet or book an errand to get started.</p>';
+        return;
+    }
+    items.slice(0, 12).forEach(tx => {
+        const positive = tx.sign === 'credit';
+        const icon = positive ? '⚡' : '📦';
+        const when = tx.createdAt
+            ? new Date(tx.createdAt * 1000).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+            : '';
+        const item = document.createElement('div');
+        item.className = 'transaction-item';
+        item.innerHTML =
+            '<span class="tx-icon ' + (positive ? 'refund' : 'charge') + '">' + icon + '</span>' +
+            '<div class="tx-details"><span class="tx-title">' + escapeHtml(tx.title || '') + '</span><span class="tx-date">' + when + '</span></div>' +
+            '<span class="tx-amount ' + (positive ? 'positive' : 'negative') + '">' + (positive ? '+' : '-') + formatNaira(Number(tx.amount) || 0) + '</span>';
+        list.appendChild(item);
+    });
+}
+
+async function reloadTransactions() {
+    try {
+        const t = await ebApi.listTransactions();
+        renderTransactions(t.transactions || []);
+    } catch (_) { /* non-fatal */ }
+}
+
+function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}

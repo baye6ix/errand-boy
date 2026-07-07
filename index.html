@@ -25,6 +25,51 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <!-- AUTH GATE -->
+    <div id="auth-gate">
+        <div class="auth-card">
+            <div class="auth-brand">
+                <span class="logo-icon"><span class="logo-init-e">E</span><span class="logo-init-b">B</span></span>
+                <span class="logo-lockup">
+                    <span class="logo-text">ERRAND <span class="logo-accent">BOY</span></span>
+                    <span class="logo-kicker">Concierge · Lagos</span>
+                </span>
+            </div>
+            <p class="auth-tagline">Lagos luxury, handled.</p>
+
+            <!-- Sign in -->
+            <form id="auth-signin" class="auth-form" onsubmit="ebDoSignIn(event)">
+                <h3>Welcome back</h3>
+                <div class="form-input-wrapper"><label for="si-email">Email</label><input type="email" id="si-email" autocomplete="email" required></div>
+                <div class="form-input-wrapper"><label for="si-pass">Password</label><input type="password" id="si-pass" autocomplete="current-password" required></div>
+                <button class="modal-submit-btn" type="submit">Sign in</button>
+                <p class="auth-error" id="si-error"></p>
+                <p class="auth-switch">New to Errand Boy? <button type="button" onclick="ebShowPanel('signup')">Create an account</button></p>
+            </form>
+
+            <!-- Sign up -->
+            <form id="auth-signup" class="auth-form" onsubmit="ebDoSignUp(event)" style="display:none;">
+                <h3>Create your account</h3>
+                <div class="form-input-wrapper"><label for="su-name">Full name</label><input type="text" id="su-name" autocomplete="name"></div>
+                <div class="form-input-wrapper"><label for="su-email">Email</label><input type="email" id="su-email" autocomplete="email" required></div>
+                <div class="form-input-wrapper"><label for="su-pass">Password (min 8 chars)</label><input type="password" id="su-pass" autocomplete="new-password" minlength="8" required></div>
+                <button class="modal-submit-btn" type="submit">Create account</button>
+                <p class="auth-error" id="su-error"></p>
+                <p class="auth-switch">Already have an account? <button type="button" onclick="ebShowPanel('signin')">Sign in</button></p>
+            </form>
+
+            <!-- Confirm -->
+            <form id="auth-confirm" class="auth-form" onsubmit="ebDoConfirm(event)" style="display:none;">
+                <h3>Verify your email</h3>
+                <p class="auth-hint">We sent a 6-digit code to <span id="cf-email"></span>.</p>
+                <div class="form-input-wrapper"><label for="cf-code">Verification code</label><input type="text" id="cf-code" inputmode="numeric" autocomplete="one-time-code" required></div>
+                <button class="modal-submit-btn" type="submit">Verify &amp; sign in</button>
+                <p class="auth-error" id="cf-error"></p>
+                <p class="auth-switch"><button type="button" onclick="ebResend()">Resend code</button></p>
+            </form>
+        </div>
+    </div>
+
     <div class="app-shell">
         <!-- Top App Header -->
         <header class="app-header">
@@ -54,8 +99,13 @@
                 </div>
                 <div class="wallet-card" id="wallet-card-trigger" onclick="openWalletModal()">
                     <span class="wallet-label">Balance</span>
-                    <span class="wallet-val" id="wallet-balance">₦185,500.00</span>
+                    <span class="wallet-val" id="wallet-balance">₦0.00</span>
                     <span class="wallet-plus">+</span>
+                </div>
+                <div class="user-chip" id="user-chip" style="display:none;">
+                    <span class="user-avatar" id="user-initial">U</span>
+                    <span class="user-email" id="user-email"></span>
+                    <button class="logout-btn" onclick="ebDoSignOut()" title="Sign out" aria-label="Sign out">⎋</button>
                 </div>
             </div>
         </header>
@@ -551,6 +601,9 @@
     </div>
 
     <!-- App JavaScript -->
+    <script src="config.js"></script>
+    <script src="auth.js"></script>
+    <script src="api.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

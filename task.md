@@ -70,8 +70,11 @@
 - [x] Lambda API handler (Python, lambda/handler.py): wallet get/fund, errands list/book, transactions
 - [x] API Gateway HTTP API + 5 routes + Cognito JWT authorizer + CORS (infra/deploy_api.py)
 - [x] End-to-end verified (tests/api_e2e.py): Cognito login → JWT → API → DynamoDB, wallet math correct, 401 without token
-- [ ] Gemini-proxy Lambda (key in Secrets Manager) — or Bedrock
-- [ ] Wire frontend: Cognito auth (login/signup UI), replace in-memory state with API calls
+- [x] Added POST /wallet/debit route so utility payments persist too
+- [x] Frontend wired: full auth gate (config.js/auth.js/api.js), Cognito sign-up/confirm/sign-in, JWT-authed API calls
+- [x] Wallet, errands, transactions now load from + persist to the cloud (verified across page reload)
+- [x] Demo account seeded for testing: demo@errandboy.app / Demo#2026x
+- [ ] Gemini-proxy Lambda (key in Secrets Manager) — or Bedrock  [deferred by user]
 - [ ] (optional) Move hosting from GitHub Pages to S3 + CloudFront
 
 # Phase 1+ (planned - see HANDOVER.md)

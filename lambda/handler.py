@@ -75,6 +75,21 @@ def handler(event, context):
         _record_txn(uid, "Wallet Funded", amount, "credit")
         return _resp(200, {"balance": _balance(uid)})
 
+    if path == "/wallet/debit" and method == "POST":
+        amount = Decimal(str(body.get("amount", 0)))
+        title = (body.get("title") or "Payment").strip()
+        if amount <= 0:
+            return _resp(400, {"error": "amount must be positive"})
+        if _balance(uid) < amount:
+            return _resp(402, {"error": "insufficient wallet balance"})
+        WALLETS.update_item(
+            Key={"userId": uid},
+            UpdateExpression="ADD balance :d",
+            ExpressionAttributeValues={":d": -amount},
+        )
+        _record_txn(uid, title, amount, "debit")
+        return _resp(200, {"balance": _balance(uid)})
+
     # ——— Errands ———
     if path == "/errands" and method == "GET":
         items = ERRANDS.query(
