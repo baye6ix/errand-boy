@@ -21,6 +21,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,500;1,600;1,700&display=swap" rel="stylesheet">
+    <!-- Leaflet (interactive map) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <!-- Main Stylesheet -->
     <link rel="stylesheet" href="style.css">
 </head>
@@ -254,9 +257,7 @@
 
                             <!-- New Interactive Canvas Map -->
                             <div class="map-wrapper">
-                                <canvas id="map-canvas" width="340" height="180" role="img" aria-label="Live map showing your runner's route across Lagos"></canvas>
-                                <span class="map-label map-label-banana">Banana Island</span>
-                                <span class="map-label map-label-lekki">Lekki</span>
+                                <div id="map-leaflet" role="img" aria-label="Live map showing your runner's route across Lagos"></div>
                             </div>
                             
                             <!-- Custom Progress Bar -->

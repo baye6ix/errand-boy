@@ -75,7 +75,10 @@
 - [x] Wallet, errands, transactions now load from + persist to the cloud (verified across page reload)
 - [x] Demo account seeded for testing: demo@errandboy.app / Demo#2026x
 - [x] Errand lifecycle: POST /errands/complete marks Delivered; tracking completion persists it; in-progress errand restores into the tracker on reload (verified)
-- [ ] Gemini-proxy Lambda (key in Secrets Manager) — or Bedrock  [deferred by user]
+- [x] Gemini-proxy Lambda (POST /chat, key in Secrets Manager) — built & wired; needs real key in secret to activate
+- [x] Live map: replaced canvas with Leaflet + CARTO dark tiles (free, no token); real Lagos map, animated runner + traced route + live GPS (verified)
+- [ ] Real signups via SES (needs your sending email/domain + AWS SES production access)
+- [ ] Polish & harden pass
 - [ ] (optional) Move hosting from GitHub Pages to S3 + CloudFront
 
 # Phase 1+ (planned - see HANDOVER.md)

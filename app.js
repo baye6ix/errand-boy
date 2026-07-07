@@ -352,17 +352,8 @@ function getTrackingStages(errandType) {
 }
 
 // ==========================================
-// CANVAS MAP — Schematic Lagos Corridor
+// LIVE MAP — Leaflet + OpenStreetMap (CARTO dark tiles, no token)
 // ==========================================
-
-const mapLocations = {
-    'Banana Island': { x: 0.15, y: 0.3 },
-    'Ikoyi': { x: 0.3, y: 0.2 },
-    'V.I.': { x: 0.45, y: 0.45 },
-    'Lekki Phase 1': { x: 0.65, y: 0.55 },
-    'Toll Gate': { x: 0.78, y: 0.65 },
-    'Jakande': { x: 0.88, y: 0.7 }
-};
 
 const mapRoute = ['Jakande', 'Toll Gate', 'Lekki Phase 1', 'V.I.', 'Ikoyi', 'Banana Island'];
 
@@ -375,178 +366,107 @@ const realGpsCoords = {
     'Jakande': { lat: 6.43580, lng: 3.50420 }
 };
 
-let mapCanvas, mapCtx;
+let ebMap = null;
+let ebRouteLatLngs = [];
+let ebRunnerMarker = null;
+let ebTraceLine = null;
 
 function initMapCanvas() {
-    mapCanvas = document.getElementById('map-canvas');
-    if (!mapCanvas) return;
-    mapCtx = mapCanvas.getContext('2d');
-    resizeCanvas();
-    window.addEventListener('resize', () => { resizeCanvas(); drawIdleMap(); });
-    drawIdleMap();
-}
+    const el = document.getElementById('map-leaflet');
+    if (!el || typeof L === 'undefined' || ebMap) return;
 
-function resizeCanvas() {
-    if (!mapCanvas) return;
-    const wrapper = mapCanvas.parentElement;
-    mapCanvas.width = wrapper.clientWidth;
-    mapCanvas.height = wrapper.clientHeight;
+    ebRouteLatLngs = mapRoute.map(n => [realGpsCoords[n].lat, realGpsCoords[n].lng]);
+    ebMap = L.map(el, { zoomControl: false, scrollWheelZoom: false, attributionControl: true });
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap &copy; CARTO',
+        subdomains: 'abcd', maxZoom: 19
+    }).addTo(ebMap);
+
+    // Faint full route + endpoint dots
+    L.polyline(ebRouteLatLngs, { color: '#ff5a1f', weight: 2, opacity: 0.28, dashArray: '4 6' }).addTo(ebMap);
+    ebRouteLatLngs.forEach(ll =>
+        L.circleMarker(ll, { radius: 3, color: '#ff7a3d', fillColor: '#ff5a1f', fillOpacity: 0.85, weight: 1 }).addTo(ebMap));
+
+    ebMap.fitBounds(ebRouteLatLngs, { padding: [26, 26] });
+    setTimeout(() => ebMap.invalidateSize(), 250);
+    window.addEventListener('resize', () => ebMap && ebMap.invalidateSize());
 }
 
 function drawIdleMap() {
-    if (!mapCtx) return;
-    const w = mapCanvas.width;
-    const h = mapCanvas.height;
-    mapCtx.clearRect(0, 0, w, h);
+    if (!ebMap) return;
+    if (ebTraceLine) { ebMap.removeLayer(ebTraceLine); ebTraceLine = null; }
+    if (ebRunnerMarker) { ebMap.removeLayer(ebRunnerMarker); ebRunnerMarker = null; }
+    ebMap.invalidateSize();
+    ebMap.fitBounds(ebRouteLatLngs, { padding: [26, 26] });
+}
 
-    // Draw road network
-    mapCtx.strokeStyle = 'rgba(255, 85, 0, 0.08)';
-    mapCtx.lineWidth = 2;
-    mapCtx.setLineDash([6, 4]);
-    mapCtx.beginPath();
-    mapRoute.forEach((name, i) => {
-        const loc = mapLocations[name];
-        if (i === 0) mapCtx.moveTo(loc.x * w, loc.y * h);
-        else mapCtx.lineTo(loc.x * w, loc.y * h);
-    });
-    mapCtx.stroke();
-    mapCtx.setLineDash([]);
+// Segment lengths + total for interpolation along the polyline.
+function ebRouteMetrics() {
+    const pts = ebRouteLatLngs;
+    const seg = [];
+    let total = 0;
+    for (let i = 1; i < pts.length; i++) {
+        const d = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+        seg.push(d); total += d;
+    }
+    return { seg, total };
+}
 
-    // Draw location dots
-    Object.entries(mapLocations).forEach(([name, pos]) => {
-        const x = pos.x * w;
-        const y = pos.y * h;
-
-        // Glow
-        const glow = mapCtx.createRadialGradient(x, y, 0, x, y, 12);
-        glow.addColorStop(0, 'rgba(255, 85, 0, 0.25)');
-        glow.addColorStop(1, 'rgba(255, 85, 0, 0)');
-        mapCtx.fillStyle = glow;
-        mapCtx.beginPath();
-        mapCtx.arc(x, y, 12, 0, Math.PI * 2);
-        mapCtx.fill();
-
-        // Dot
-        mapCtx.fillStyle = 'rgba(255, 85, 0, 0.7)';
-        mapCtx.beginPath();
-        mapCtx.arc(x, y, 4, 0, Math.PI * 2);
-        mapCtx.fill();
-
-        // Label
-        mapCtx.fillStyle = 'rgba(255, 255, 255, 0.35)';
-        mapCtx.font = '10px Outfit, sans-serif';
-        mapCtx.fillText(name, x + 8, y - 8);
-    });
+// Returns { pos:[lat,lng], trace:[[lat,lng],...] } at fraction t of the route.
+function ebRouteAt(t) {
+    const pts = ebRouteLatLngs;
+    const { seg, total } = ebRouteMetrics();
+    const target = t * total;
+    let acc = 0;
+    const trace = [pts[0]];
+    for (let i = 1; i < pts.length; i++) {
+        if (acc + seg[i - 1] < target) {
+            trace.push(pts[i]);
+            acc += seg[i - 1];
+        } else {
+            const f = seg[i - 1] ? (target - acc) / seg[i - 1] : 0;
+            const pos = [
+                pts[i - 1][0] + f * (pts[i][0] - pts[i - 1][0]),
+                pts[i - 1][1] + f * (pts[i][1] - pts[i - 1][1])
+            ];
+            trace.push(pos);
+            return { pos, trace };
+        }
+    }
+    return { pos: pts[pts.length - 1], trace: pts.slice() };
 }
 
 function startMapAnimation(stages) {
-    if (!mapCtx) return;
+    if (!ebMap) initMapCanvas();
+    if (!ebMap) return;
 
-    const w = mapCanvas.width;
-    const h = mapCanvas.height;
-    const routePoints = mapRoute.map(name => ({
-        x: mapLocations[name].x * w,
-        y: mapLocations[name].y * h
-    }));
-    const gpsRoutePoints = mapRoute.map(name => realGpsCoords[name]);
+    ebMap.invalidateSize();
+    if (state.mapAnimFrame) cancelAnimationFrame(state.mapAnimFrame);
+    if (ebTraceLine) { ebMap.removeLayer(ebTraceLine); ebTraceLine = null; }
+    if (ebRunnerMarker) { ebMap.removeLayer(ebRunnerMarker); ebRunnerMarker = null; }
 
-    let progress = 0;
-    const totalDuration = stages.length * 7000; // total ms for all stages
+    const runnerIcon = L.divIcon({ className: 'runner-pin', html: '🚴', iconSize: [28, 28], iconAnchor: [14, 14] });
+    ebRunnerMarker = L.marker(ebRouteLatLngs[0], { icon: runnerIcon }).addTo(ebMap);
+    ebTraceLine = L.polyline([ebRouteLatLngs[0]], { color: '#ff5a1f', weight: 4, opacity: 0.95 }).addTo(ebMap);
+    ebMap.fitBounds(ebRouteLatLngs, { padding: [26, 26] });
+
+    const totalDuration = stages.length * 7000;
     const startTime = Date.now();
 
     function animate() {
-        const elapsed = Date.now() - startTime;
-        progress = Math.min(elapsed / totalDuration, 1);
+        const t = Math.min((Date.now() - startTime) / totalDuration, 1);
+        const { pos, trace } = ebRouteAt(t);
+        ebRunnerMarker.setLatLng(pos);
+        ebTraceLine.setLatLngs(trace);
 
-        drawIdleMap();
-
-        // Draw traced path
-        const totalLen = getRouteLength(routePoints);
-        const tracedLen = progress * totalLen;
-        let accumulated = 0;
-
-        mapCtx.strokeStyle = 'rgba(255, 85, 0, 0.6)';
-        mapCtx.lineWidth = 3;
-        mapCtx.shadowColor = 'rgba(255, 85, 0, 0.4)';
-        mapCtx.shadowBlur = 8;
-        mapCtx.beginPath();
-        mapCtx.moveTo(routePoints[0].x, routePoints[0].y);
-
-        let bikePos = { x: routePoints[0].x, y: routePoints[0].y };
-        let gpsPos = { lat: gpsRoutePoints[0].lat, lng: gpsRoutePoints[0].lng };
-
-        for (let i = 1; i < routePoints.length; i++) {
-            const segLen = dist(routePoints[i - 1], routePoints[i]);
-            if (accumulated + segLen <= tracedLen) {
-                mapCtx.lineTo(routePoints[i].x, routePoints[i].y);
-                accumulated += segLen;
-                bikePos = { x: routePoints[i].x, y: routePoints[i].y };
-                gpsPos = { lat: gpsRoutePoints[i].lat, lng: gpsRoutePoints[i].lng };
-            } else {
-                const remain = tracedLen - accumulated;
-                const t = remain / segLen;
-                const px = routePoints[i - 1].x + t * (routePoints[i].x - routePoints[i - 1].x);
-                const py = routePoints[i - 1].y + t * (routePoints[i].y - routePoints[i - 1].y);
-                mapCtx.lineTo(px, py);
-                bikePos = { x: px, y: py };
-
-                // Interpolate GPS coordinates
-                const pLat = gpsRoutePoints[i - 1].lat + t * (gpsRoutePoints[i].lat - gpsRoutePoints[i - 1].lat);
-                const pLng = gpsRoutePoints[i - 1].lng + t * (gpsRoutePoints[i].lng - gpsRoutePoints[i - 1].lng);
-                gpsPos = { lat: pLat, lng: pLng };
-                break;
-            }
-        }
-
-        mapCtx.stroke();
-        mapCtx.shadowBlur = 0;
-
-        // Draw bike icon
-        drawBikeMarker(bikePos.x, bikePos.y);
-
-        // Update live GPS coordinates in UI
         const gpsEl = document.getElementById('track-gps');
-        if (gpsEl) {
-            gpsEl.innerText = `${gpsPos.lat.toFixed(5)}° N, ${gpsPos.lng.toFixed(5)}° E`;
-        }
+        if (gpsEl) gpsEl.innerText = `${pos[0].toFixed(5)}° N, ${pos[1].toFixed(5)}° E`;
 
-        if (progress < 1 && state.activeErrand) {
+        if (t < 1 && state.activeErrand) {
             state.mapAnimFrame = requestAnimationFrame(animate);
         }
     }
-
     animate();
-}
-
-function drawBikeMarker(x, y) {
-    // Outer glow
-    const glow = mapCtx.createRadialGradient(x, y, 0, x, y, 20);
-    glow.addColorStop(0, 'rgba(255, 85, 0, 0.4)');
-    glow.addColorStop(1, 'rgba(255, 85, 0, 0)');
-    mapCtx.fillStyle = glow;
-    mapCtx.beginPath();
-    mapCtx.arc(x, y, 20, 0, Math.PI * 2);
-    mapCtx.fill();
-
-    // Inner circle
-    mapCtx.fillStyle = '#ff5500';
-    mapCtx.beginPath();
-    mapCtx.arc(x, y, 8, 0, Math.PI * 2);
-    mapCtx.fill();
-
-    // Emoji bike
-    mapCtx.font = '14px sans-serif';
-    mapCtx.fillText('🚴', x - 7, y + 5);
-}
-
-function getRouteLength(points) {
-    let len = 0;
-    for (let i = 1; i < points.length; i++) len += dist(points[i - 1], points[i]);
-    return len;
-}
-
-function dist(a, b) {
-    return Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2);
 }
 
 // ==========================================
