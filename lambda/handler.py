@@ -119,6 +119,18 @@ def handler(event, context):
         _record_txn(uid, f"{etype} ({errand_id})", cost, "debit")
         return _resp(201, {"errand": record, "balance": _balance(uid)})
 
+    if path == "/errands/complete" and method == "POST":
+        eid = body.get("errandId")
+        if not eid:
+            return _resp(400, {"error": "errandId required"})
+        ERRANDS.update_item(
+            Key={"userId": uid, "errandId": eid},
+            UpdateExpression="SET #s = :d, completedAt = :t",
+            ExpressionAttributeNames={"#s": "status"},
+            ExpressionAttributeValues={":d": "Delivered", ":t": int(time.time())},
+        )
+        return _resp(200, {"ok": True})
+
     # ——— Transactions ———
     if path == "/transactions" and method == "GET":
         items = TXNS.query(

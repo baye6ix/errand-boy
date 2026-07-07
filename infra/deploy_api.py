@@ -130,7 +130,8 @@ def ensure_api(lambda_arn, out):
 
     existing_routes = {r["RouteKey"] for r in api.get_routes(ApiId=api_id).get("Items", [])}
     routes = ["GET /wallet", "POST /wallet/fund", "POST /wallet/debit",
-              "GET /errands", "POST /errands", "GET /transactions"]
+              "GET /errands", "POST /errands", "POST /errands/complete",
+              "GET /transactions"]
     for rk in routes:
         if rk in existing_routes:
             continue

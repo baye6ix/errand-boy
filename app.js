@@ -274,6 +274,10 @@ function startSimulatedTracking() {
             state.completedErrandsCount += 1;
             updateStatsUI();
 
+            if (window.ebApi && errand.id) {
+                ebApi.completeErrand(errand.id).then(() => reloadTransactions()).catch(() => {});
+            }
+
             showToast('Completed: Errand ' + errand.id + ' has been delivered successfully.');
 
             document.getElementById('track-status').innerText = 'Delivered ✓';
@@ -983,8 +987,23 @@ async function loadCloudState() {
         state.walletBalance = Number(w.balance) || 0;
         updateWalletUI();
         renderTransactions(t.transactions || []);
-        state.completedErrandsCount = (er.errands || []).length;
-        state.activeErrandsCount = 0;
+
+        const errands = er.errands || [];
+        state.completedErrandsCount = errands.filter(e => e.status === 'Delivered').length;
+        const active = errands.find(e => e.status && e.status !== 'Delivered');
+        if (active && !state.activeErrand) {
+            state.activeErrand = {
+                id: active.errandId,
+                type: active.type,
+                step: 0,
+                cost: Number(active.cost) || 0,
+                timestamp: ''
+            };
+            state.activeErrandsCount = 1;
+            startSimulatedTracking();
+        } else {
+            state.activeErrandsCount = 0;
+        }
         updateStatsUI();
     } catch (ex) {
         if (ex.status === 401) { ebAuth.signOut(); ebShowPanel('signin'); return; }

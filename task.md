@@ -74,6 +74,7 @@
 - [x] Frontend wired: full auth gate (config.js/auth.js/api.js), Cognito sign-up/confirm/sign-in, JWT-authed API calls
 - [x] Wallet, errands, transactions now load from + persist to the cloud (verified across page reload)
 - [x] Demo account seeded for testing: demo@errandboy.app / Demo#2026x
+- [x] Errand lifecycle: POST /errands/complete marks Delivered; tracking completion persists it; in-progress errand restores into the tracker on reload (verified)
 - [ ] Gemini-proxy Lambda (key in Secrets Manager) — or Bedrock  [deferred by user]
 - [ ] (optional) Move hosting from GitHub Pages to S3 + CloudFront
 

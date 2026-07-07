@@ -22,6 +22,7 @@
     debitWallet: (amount, title) => req("POST", "/wallet/debit", { amount, title }),
     listErrands: () => req("GET", "/errands"),
     bookErrand: (type, cost) => req("POST", "/errands", { type, cost }),
+    completeErrand: (errandId) => req("POST", "/errands/complete", { errandId }),
     listTransactions: () => req("GET", "/transactions"),
   };
 })();
