@@ -63,8 +63,19 @@
 - [x] Ready-to-paste Claude-in-Chrome prompt to mint the access key (`aws/claude-in-chrome-prompt.md`)
 - [ ] User generates key + drops it into local `.env` (AWS_ACCESS_KEY_ID / SECRET / REGION)
 
+# Phase 1 — AWS backend (IN PROGRESS)
+- [x] Credentials isolated in ~/.aws profile `errand-boy` (scoped IAM user, NOT root, not in repo)
+- [x] Root key flagged for deletion (user to delete in console; local fallback `errand-boy-root`)
+- [x] Foundation stack deployed (infra/foundation.yaml via boto3): DynamoDB (Errands/Transactions/Wallets) + Cognito user pool & client
+- [x] Lambda API handler (Python, lambda/handler.py): wallet get/fund, errands list/book, transactions
+- [x] API Gateway HTTP API + 5 routes + Cognito JWT authorizer + CORS (infra/deploy_api.py)
+- [x] End-to-end verified (tests/api_e2e.py): Cognito login → JWT → API → DynamoDB, wallet math correct, 401 without token
+- [ ] Gemini-proxy Lambda (key in Secrets Manager) — or Bedrock
+- [ ] Wire frontend: Cognito auth (login/signup UI), replace in-memory state with API calls
+- [ ] (optional) Move hosting from GitHub Pages to S3 + CloudFront
+
 # Phase 1+ (planned - see HANDOVER.md)
-- [ ] AWS backend: Cognito auth, DynamoDB, API Gateway + Lambda
+- [ ] AWS backend: Cognito auth, DynamoDB, API Gateway + Lambda (foundation done above)
 - [ ] Gemini-via-Lambda proxy (key in Secrets Manager) OR Amazon Bedrock — provider TBD
 - [ ] Real payments (Paystack/Flutterwave) + utility bills (VTU aggregator)
 - [ ] Realtime tracking (WebSockets + Mapbox), SMS/push notifications

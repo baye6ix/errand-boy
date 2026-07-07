@@ -1,0 +1,77 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Errand Boy — Phase 1 foundation: DynamoDB data layer + Cognito auth.
+  Deployed via boto3 (see infra/deploy.py) using the isolated 'errand-boy' profile.
+
+Resources:
+
+  # ——— Data layer (on-demand billing = pay only for what you use) ———
+  ErrandsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: ErrandBoy-Errands
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - { AttributeName: userId,   AttributeType: S }
+        - { AttributeName: errandId, AttributeType: S }
+      KeySchema:
+        - { AttributeName: userId,   KeyType: HASH }
+        - { AttributeName: errandId, KeyType: RANGE }
+
+  TransactionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: ErrandBoy-Transactions
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - { AttributeName: userId, AttributeType: S }
+        - { AttributeName: txnId,  AttributeType: S }
+      KeySchema:
+        - { AttributeName: userId, KeyType: HASH }
+        - { AttributeName: txnId,  KeyType: RANGE }
+
+  WalletsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: ErrandBoy-Wallets
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - { AttributeName: userId, AttributeType: S }
+      KeySchema:
+        - { AttributeName: userId, KeyType: HASH }
+
+  # ——— Auth (phone-first Lagos audience → email + password to start) ———
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: ErrandBoy-Users
+      UsernameAttributes: [email]
+      AutoVerifiedAttributes: [email]
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireUppercase: false
+          RequireSymbols: false
+      Schema:
+        - { Name: name, AttributeDataType: String, Mutable: true, Required: false }
+
+  UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: ErrandBoy-WebClient
+      UserPoolId: !Ref UserPool
+      GenerateSecret: false
+      ExplicitAuthFlows:
+        - ALLOW_USER_SRP_AUTH
+        - ALLOW_USER_PASSWORD_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+
+Outputs:
+  ErrandsTable:       { Value: !Ref ErrandsTable }
+  TransactionsTable:  { Value: !Ref TransactionsTable }
+  WalletsTable:       { Value: !Ref WalletsTable }
+  UserPoolId:         { Value: !Ref UserPool }
+  UserPoolClientId:   { Value: !Ref UserPoolClient }
+  Region:             { Value: !Ref 'AWS::Region' }

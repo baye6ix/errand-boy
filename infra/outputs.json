@@ -1,0 +1,9 @@
+{
+  "WalletsTable": "ErrandBoy-Wallets",
+  "UserPoolClientId": "athmjm4kjutfrl7lgf38aa4du",
+  "UserPoolId": "eu-west-1_eeVxRxgIT",
+  "TransactionsTable": "ErrandBoy-Transactions",
+  "Region": "eu-west-1",
+  "ErrandsTable": "ErrandBoy-Errands",
+  "ApiBaseUrl": "https://80immefbhk.execute-api.eu-west-1.amazonaws.com"
+}
