@@ -22,3 +22,6 @@ Thumbs.db
 
 # Excluded from push until gh token has `workflow` scope (file kept locally)
 .github/workflows/
+
+# Stray/unrelated documents — keep out of this repo
+*.docx
