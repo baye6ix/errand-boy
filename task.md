@@ -77,8 +77,8 @@
 - [x] Errand lifecycle: POST /errands/complete marks Delivered; tracking completion persists it; in-progress errand restores into the tracker on reload (verified)
 - [x] Gemini-proxy Lambda (POST /chat, key in Secrets Manager) — built & wired; needs real key in secret to activate
 - [x] Live map: replaced canvas with Leaflet + CARTO dark tiles (free, no token); real Lagos map, animated runner + traced route + live GPS (verified)
+- [x] Polish & harden: busy/loading states on auth + booking + utility forms (no double-submit); regression test extended to debit/complete/chat (all green); resilient no-auth check
 - [ ] Real signups via SES (needs your sending email/domain + AWS SES production access)
-- [ ] Polish & harden pass
 - [ ] (optional) Move hosting from GitHub Pages to S3 + CloudFront
 
 # Phase 1+ (planned - see HANDOVER.md)

@@ -154,6 +154,7 @@ async function handleUtilitySubmit(event, type) {
     }
 
     const form = event.target;
+    ebSetBusy(form, true, 'Processing…');
     try {
         const r = await ebApi.debitWallet(cost, desc);
         state.walletBalance = Number(r.balance) || 0;
@@ -164,6 +165,8 @@ async function handleUtilitySubmit(event, type) {
     } catch (ex) {
         if (ex.status === 402) showToast('Error: Insufficient balance. Please fund your wallet.');
         else showToast('Payment failed: ' + (ex.error || ex.message || 'error'));
+    } finally {
+        ebSetBusy(form, false);
     }
 }
 
@@ -217,6 +220,7 @@ async function submitErrand(event, errandType) {
     }
 
     const form = event.target;
+    ebSetBusy(form, true, 'Booking…');
     try {
         const r = await ebApi.bookErrand(errandType, cost);
         state.walletBalance = Number(r.balance) || 0;
@@ -240,6 +244,8 @@ async function submitErrand(event, errandType) {
     } catch (ex) {
         if (ex.status === 402) showToast('Error: Insufficient wallet balance to hire Errand Boy.');
         else showToast('Booking failed: ' + (ex.error || ex.message || 'error'));
+    } finally {
+        ebSetBusy(form, false);
     }
 }
 
@@ -860,6 +866,20 @@ document.addEventListener('click', (e) => {
 // ==========================================
 let pendingSignup = null;
 
+// Toggle a form's submit button into a disabled "busy" state (prevents double-submit).
+function ebSetBusy(form, busy, busyText) {
+    const btn = form && form.querySelector('button[type="submit"]');
+    if (!btn) return;
+    if (busy) {
+        if (!btn.dataset.label) btn.dataset.label = btn.innerText;
+        btn.disabled = true;
+        btn.innerText = busyText || 'Please wait…';
+    } else {
+        btn.disabled = false;
+        if (btn.dataset.label) { btn.innerText = btn.dataset.label; delete btn.dataset.label; }
+    }
+}
+
 function ebShowPanel(name) {
     document.body.classList.remove('authed');
     document.getElementById('auth-gate').style.display = 'flex';
@@ -871,25 +891,31 @@ function ebShowPanel(name) {
 
 async function ebDoSignIn(event) {
     event.preventDefault();
+    const form = event.target;
     const email = document.getElementById('si-email').value.trim();
     const pass = document.getElementById('si-pass').value;
     const err = document.getElementById('si-error');
     err.innerText = '';
+    ebSetBusy(form, true, 'Signing in…');
     try {
         await ebAuth.signIn(email, pass);
         await ebEnterApp();
     } catch (ex) {
         err.innerText = ex.message || 'Could not sign in.';
+    } finally {
+        ebSetBusy(form, false);
     }
 }
 
 async function ebDoSignUp(event) {
     event.preventDefault();
+    const form = event.target;
     const name = document.getElementById('su-name').value.trim();
     const email = document.getElementById('su-email').value.trim();
     const pass = document.getElementById('su-pass').value;
     const err = document.getElementById('su-error');
     err.innerText = '';
+    ebSetBusy(form, true, 'Creating…');
     try {
         await ebAuth.signUp(email, pass, name);
         pendingSignup = { email, pass };
@@ -897,6 +923,8 @@ async function ebDoSignUp(event) {
         ebShowPanel('confirm');
     } catch (ex) {
         err.innerText = ex.message || 'Could not create account.';
+    } finally {
+        ebSetBusy(form, false);
     }
 }
 
@@ -906,6 +934,8 @@ async function ebDoConfirm(event) {
     const err = document.getElementById('cf-error');
     err.innerText = '';
     if (!pendingSignup) { ebShowPanel('signin'); return; }
+    const form = event.target;
+    ebSetBusy(form, true, 'Verifying…');
     try {
         await ebAuth.confirm(pendingSignup.email, code);
         await ebAuth.signIn(pendingSignup.email, pendingSignup.pass);
@@ -913,6 +943,8 @@ async function ebDoConfirm(event) {
         await ebEnterApp();
     } catch (ex) {
         err.innerText = ex.message || 'Invalid code.';
+    } finally {
+        ebSetBusy(form, false);
     }
 }
 

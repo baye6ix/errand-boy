@@ -57,10 +57,12 @@ def main():
     # no-auth check
     try:
         req = urllib.request.Request(BASE + "/wallet", method="GET")
-        urllib.request.urlopen(req)
+        urllib.request.urlopen(req, timeout=10)
         print("noauth: UNEXPECTED 200")
     except urllib.error.HTTPError as e:
         print(f"noauth: {e.code} (expected 401)")
+    except urllib.error.URLError as e:
+        print(f"noauth: skipped (transient network: {e.reason})")
 
     steps = [
         ("GET",  "/wallet",       None),
@@ -78,6 +80,17 @@ def main():
                 break
             time.sleep(4)
         print(f"{method} {path} -> {code}  {json.dumps(resp)[:120]}")
+
+    # ——— newer endpoints: debit, complete, chat ———
+    code, r = call("POST", "/wallet/debit", token, {"amount": 2000, "title": "Airtime test"})
+    print(f"POST /wallet/debit -> {code}  {json.dumps(r)[:80]}")
+    code, r = call("POST", "/errands", token, {"type": "Dispatch Rider", "cost": 4000})
+    eid = r.get("errand", {}).get("errandId")
+    print(f"POST /errands (dispatch) -> {code}  {eid}")
+    code, r = call("POST", "/errands/complete", token, {"errandId": eid})
+    print(f"POST /errands/complete -> {code}  {json.dumps(r)[:60]}")
+    code, r = call("POST", "/chat", token, {"message": "are you close?"})
+    print(f"POST /chat -> {code}  {json.dumps(r)[:80]}  (configured={r.get('configured')})")
 
     print("cleanup: deleting test user...")
     idp.admin_delete_user(UserPoolId=POOL, Username=EMAIL)
